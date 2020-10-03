@@ -1,0 +1,182 @@
+<!doctype html>
+
+<head>
+ <meta charset="utf-8">
+  <title>usbhlib</title>
+  <meta name="description" content="usbhlib">
+  <meta name="author" content="Kenji Ishimaru">
+  <style type="text/css">
+    table, td, th{
+      border: 1px solid black;
+    }
+    div {
+      text-align : center;
+    }
+  </style>
+</head>
+<body>
+<h1>UsbHLib USBホストCライブラリ</h1>
+<div>
+<img src="./usbhost.png" alt="usbhost">
+</div>
+<h2>概要</h2>
+USBホストIPなどのハードウェアを制御してUSBホスト機能を実現するためのCライブラリです。現在はUSBホストIPとしてOpenCoresで公開されているUSBHostSlave IPCoreをサポートしています。
+
+<h2>サポートしているUSBデバイス</h2>
+<ul>
+<li>HUB</li>
+<li>Human Interface Devices</li>
+  <ul>
+    <li>キーボード</li>
+    <li>マウス</li>
+    <li>ゲームパッド</li>
+ </ul>
+<li>Mass Storage Class Bulk-Only Transport</li>
+</ul>
+
+<h2>ディレクトリ構成</h2>
+<table>
+  <tr><td>doc</td><td>ドキュメント</td></tr>
+  <tr><td>core</td><td>USBホストCライブラリのソースファイル</td></tr>
+  <tr><td>hw_dep</td><td>プラットフォーム依存部のソースファイル</td></tr>
+  <tr><td> - nios2</td><td>Nios2システム依存部</td></tr>
+  <tr><td> - microblaze</td><td>MicroBlazeシステム依存部</td></tr>
+  <tr><td>config_sample</td><td>Cライブラリ設定例</td></tr>
+  <tr><td> - all</td><td>すべてのサポートデバイスを利用する場合の設定ファイル例</td></tr>
+  <tr><td> - simple_mouse</td><td>マウスとHUBを利用する場合の設定ファイル例</td></tr>
+  <tr><td> - dev_attach_detach</td><td>HUBにマウスが取り付け/取り外しされた場合に発生するコールバック関数を利用する場合の設定例</td></tr>
+  <tr><td> - simple_keyboard</td><td>キーボードとHUBを利用する場合の設定ファイル例</td></tr>
+  <tr><td> - simple_gamepad</td><td>ゲームパッドとHUBを利用する場合の設定ファイル例</td></tr>
+  <tr><td> - simple_msd_bot</td><td>USBメモリ、カードリーダー等のストレージとHUBを利用する場合の設定ファイル例</td></tr>
+  <tr><td>microblaze</td><td>MicroBlazeを使用する場合の設定例</td></tr>
+  <tr><td> - all</td><td>すべてのサポートデバイスを利用する場合の設定ファイル例</td></tr>
+  <tr><td> - simple_mouse</td><td>マウスとHUBを利用する場合の設定ファイル例</td></tr>
+</table>
+
+<h2>ファイル構成</h2>
+Cライブラリは、coreディレクトリのファイル、プラットフォームに応じたhw_depディレクトリのファイル、Cライブラリの設定を定義したconfig_sampleディレクトリのファイルで構成されます。
+<br>
+例) NiosIIプラットフォームでマウスとHUBを利用する場合のファイル構成
+<pre><code>
+  coreのファイル+
+  hw_dep/nios2のファイル+
+  config_sample/simple_mouseのファイル
+</code></Pre>
+
+例)MicroBlazeプラットフォームで全サポートデバイスを利用する場合のファイル構成
+<br>
+<pre><code>
+  coreのファイル+
+  hw_dep/microblazeのファイル+
+  config_sample/microblaze/allのファイル
+</code></Pre>
+
+<h2>ライブラリのdefine設定</h2>
+usbh_config.hのdefine設定によってCライブラリの構成が変わります。define定義に従って決まったメモリ量をあらかじめ静的に確保します。(Cライブラリでは実行時にメモリの動的確保を行いません。)
+<h3>環境に関する設定</h3>
+<table>
+  <tr><th>define名</th><th>説明</th></tr>
+  <tr><td>USBH_DEV_INITIAL_ADDRESS</td><td>エニュメレーション時にデバイスに割り当てるアドレスの初期値。デバイスが見つかると、USBH_DEV_INITIAL_ADDRESSに指定した値から順番にデバイスにアドレスが割り当てられる。</td></tr>
+  <tr><td>USBH_START_CONN</td><td>USBコネクタの開始番号。通常は0に設定。</td></tr>
+  <tr><td>USBH_NUM_OF_CONNS</td><td>使用するUSBコネクタの数。通常は1に設定。</td></tr>
+  <tr><td>USBH_NUM_OF_DEVICES</td><td>ライブラリで管理するデバイスの最大数。</td></tr>
+  <tr><td>USBH_MAX_INTERFACE</td><td>1つのデバイスが持つインターフェースの最大数。</td></tr>
+  <tr><td>USBH_MAX_ENDP</td><td>1つのインターフェースが持つエンドポイントの最大数</td></tr>
+  <tr><td>USBH_MAX_HUB_POR</td><td>HUBを使用する場合、そのHUBの最大ポート数</td></tr>
+  <tr><td>USBH_LOOKUP_MAX_CNT</td><td>ホストが管理するデバイス検索ルックアップテーブルの設定。マウス、キーボード等の種類別の最大登録数を指定。</td></tr>
+</table>
+
+<h3>使用するデバイスクラスの有効/無効設定</h3>
+<table>
+  <tr><th>define名</th><th>説明</th></tr>
+  <tr><td>USBH_USE_HUB</td><td>HUBを使用する場合にdefineを行う。</td></tr>
+  <tr><td>USBH_USE_HID</td><td>マウス、キーボード、ゲームパッドを使用する場合にdefineを行う。</td></tr>
+  <tr><td>USBH_USE_MSD</td><td>USBフラッシュメモリ、SDカードリーダー等のストレージを使用する場合にdefineを行う。</td></tr>
+</table>
+
+<h3>HUBに関する設定</h3>
+<table>
+  <tr><th>define名</th><th>説明</th></tr>
+  <tr><td>USBH_HUB_REPORT_MAX_BUF</td><td>“Hub and Port Status Change Bitmap”を格納するバッファのバイトサイズ。</td></tr>
+  <tr><td>USBH_HUB_CALLBACK</td><td>HUBにデバイスが脱着された時にコールバック関数による処理が必要な場合にdefineを行う。</td></tr>
+</table>
+
+<h3>HIDに関する設定</h3>
+<table>
+  <tr><th>define名</th><th>説明</th></tr>
+  <tr><td>USBH_USE_MOUSE</td><td>マウスを使用する場合にdefineを行う。</td></tr>
+  <tr><td>USBH_USE_KEYBOARD</td><td>キーボードを使用する場合にdefineを行う。</td></tr>
+  <tr><td>USBH_USE_GAMEPAD</td><td>ゲームパッドを使用する場合にdefineを行う。</td></tr>
+  <tr><td>USBH_HID_REPORT_MAX_BUF</td><td>デバイスから取得したHIDのデータを格納するワークバッファのサイズ</td></tr>
+</table>
+
+<h3>マウスに関する設定</h3>
+<table>
+  <tr><th>define名</th><th>説明</th></tr>
+  <tr><td>USBH_USE_MOUSE_BOOT_PROTOCOL</td><td>Boot Protocolを使用してマウスのデータを識別。</td></tr>
+  <tr><td>USBH_USE_MOUSE_BTN_IDX</td><td>マウスのボタンデータのインデックス値。(USBH_USE_MOUSE_BOOT_PROTOCOLがdefineされていない場合のみ有効)</td></tr>
+  <tr><td>USBH_USE_MOUSE_X_IDX</td><td>マウスのX軸移動量データのインデックス値。(USBH_USE_MOUSE_BOOT_PROTOCOLがdefineされていない場合のみ有効)</td></tr>
+  <tr><td>USBH_USE_MOUSE_Y_IDX</td><td>マウスのY軸移動量データのインデックス値。(USBH_USE_MOUSE_BOOT_PROTOCOLがdefineされていない場合のみ有効)</td></tr>
+  <tr><td>USBH_USE_MOUSE_Z_IDX</td><td>マウスのZ軸移動量データのインデックス値。(USBH_USE_MOUSE_BOOT_PROTOCOLがdefineされていない場合のみ有効)</td></tr>
+</table>
+
+<h3>キーボードに関する設定</h3>
+<table>
+  <tr><th>define名</th><th>説明</th></tr>
+  <tr><td>USBH_HID_LANG_JAPANESE</td><td>日本語キーボードを使用する場合にdefineを行う。</td></tr>
+  <tr><td>USBH_USE_KEYBOARD_BOOT_PROTOCOL</td><td>Boot Protocolを使用してキーボードのデータを識別。</td></tr>
+  <tr><td>USBH_USE_KEYBOARD_M_IDX</td><td>キーボードのモデファイアデータのインデックス値。(USBH_USE_KEYBOARD_BOOT_PROTOCOLがdefineされていない場合のみ有効)</td>  <tr><td>USBH_USE_KEYBOARD_K_IDX</td><td>キーボードのキーデータのインデックス値。(USBH_USE_KEYBOARD_BOOT_PROTOCOLがdefineされていない場合のみ有効)</td></tr>
+</table>
+
+<h3>ゲームパッドに関する設定</h3>
+<table>
+  <tr><th>define名</th><th>説明</th></tr>
+  <tr><td>USBH_USE_REPORT_DESCRIPTOR</td><td>ゲームパッドの情報をReportディスクリプタから判別する場合にdefineを行う。</td></tr>
+  <tr><td>USBH_HID_REPORT_DESC_MAX_BUF</td><td>Reportディスクリプタ解析用ワークバッファのバイトサイズ。</td></tr>
+  <tr><td>USBH_USE_GAMEPAD_BTN_IDX</td><td>ゲームパッドのボタンデータのインデックス値。(USBH_USE_REPORT_DESCRIPTORがdefineされていない場合のみ有効)</td></tr>
+  <tr><td>USBH_USE_GAMEPAD_X_IDX</td><td>ゲームパッドのX方向データのインデックス値。(USBH_USE_REPORT_DESCRIPTORがdefineされていない場合のみ有効)</td></tr>
+  <tr><td>USBH_USE_GAMEPAD_Y_IDX</td><td>ゲームパッドのY方向データのインデックス値。(USBH_USE_REPORT_DESCRIPTORがdefineされていない場合のみ有効)</td></tr>
+  <tr><td>USBH_HID_SUPPORT_PS3_GC</td><td>PS3 Game Controllerを利用する場合にdefineを行う。</td></tr>
+</table>
+
+<h3>その他</h3>
+<table>
+  <tr><th>define名</th><th>説明</th></tr>
+  <tr><td>INFO_PRINT</td><td>エニュメレーション中の情報などをコンソールに表示する場合にdefineを行う。</td></tr>
+</table>
+
+<h2>サンプルプログラム</h2>
+<table>
+  <tr><th>プログラム名</th><th>説明</th></tr>
+  <tr><td>simple_mouse.c</td><td>マウスのみを利用する場合のサンプルプログラム。マウスの値が変化すると、コールバック関数が呼ばれてマウスの状態値がコンソールに表示される。</td></tr>
+  <tr><td>simple_mouse_hub.c</td><td>HUBにマウスが取り付けられた時と取り外された時にコールバック関数が呼ばれる。</td></tr>
+  <tr><td>simple_keyboard.c</td><td>キーボードのみを利用する場合のサンプルプログラム。キーが押されると、コールバック関数が呼ばれてキーに対応した文字がコンソールに表示される。</td></tr>
+  <tr><td>simple_gamepad.c</td><td>ゲームパッドのみを利用する場合のサンプルプログラム。ゲームパッドのボタンが押されると、コールバック関数が呼ばれてボタンの状態値がコンソールに表示される。</td></tr>
+  <tr><td>simple_msd_bot.c</td><td>USBメモリ等のストレージのみを利用する場合のサンプルプログラム。(ファイルシステムとしてFatFsを利用）</td></tr>
+  <tr><td>simple_msd_bot_pff.c</td><td>USBメモリ等のストレージのみを利用する場合のサンプルプログラム。(ファイルシステムとしてPetit FatFsを利用)</td></tr>
+  <tr><td>all_ff.c</td><td>すべてのサポートデバイスを利用する場合のサンプルプログラム。</td></tr>
+</table>
+
+<h2>プラットフォーム（ハードウェア）依存部分の初期化関数について</h2>
+<h3>1.ul_hw_init関数の追加</h3>
+uh_init関数(初期化関数)の先頭に、プラットフォーム依存部の初期化用としてul_hw_init関数の呼び出しを追加しました。
+<br>
+サンプルではhw_dep/nios2/usbh_hw.cとhw_dep/microblae/usbh_hw.cで実装を行っています。
+<h3>2.ul_hw_device_setup関数の追加</h3>
+デバイスの設定を行うum_device_setup関数内にul_hw_device_setup関数の呼び出しを追加しました。<br>
+ul_hw_device_setup関数の呼び出しタイミングは、デバイスのディスクリプタ取得後、そのデバイスのコンフィギュレーションやアドレスの設定を行う前です。サンプルではhw_dep/nios2/usbh_hw.cとhw_dep/microblae/usbh_hw.cで実装を行っています。（サンプルでは関数が呼ばれた確認用として、文字列表示のみを行っています。）
+
+<h2>更新履歴</h2>
+<pre><code>
+2013/10/01  公開
+2013/10/31  USBH_HID_SUPPORT_PS3_GCを追加
+2014/09/18  hw_dep以下の構成を変更
+            simple_mouse_hub.cサンプルを追加
+            サンプルのprintfをマクロ(MPRINT)に変更
+            USBH_USE_HUB_CALLBACKのdefineを追加
+            ul_hw_init関数の追加
+            ul_hw_device_setup関数の追加
+</code></Pre>
+
+</body>
+</html>
